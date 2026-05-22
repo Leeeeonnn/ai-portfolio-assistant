@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useMemo, useRef, useState } from "react";
-import { Loader2, Send, Sparkles } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Loader2, RefreshCw, Send, Sparkles } from "lucide-react";
 import { readDifyStream } from "@/features/chat/lib/stream";
 import type { ChatMessage } from "@/features/chat/types";
 
@@ -13,7 +13,8 @@ const welcomeMessage: ChatMessage = {
   id: "welcome",
   role: "assistant",
   content:
-    "你好，我是这个作品集的 AI 助手。你可以问我关于经历、项目、技能、协作方式或联系方式的问题。",
+    "你好，我是 Leon 的 AI 作品集助手，基于公开作品集材料和处理后的沟通风格摘要回答。你可以问我关于经历、项目、技能、协作方式或联系方式的问题。",
+  status: "complete",
 };
 
 export function PortfolioChat({ quickQuestions }: PortfolioChatProps) {
@@ -22,12 +23,19 @@ export function PortfolioChat({ quickQuestions }: PortfolioChatProps) {
   const [conversationId, setConversationId] = useState<string>();
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string>();
+  const [lastFailedQuery, setLastFailedQuery] = useState<string>();
   const abortRef = useRef<AbortController | null>(null);
+  const taskIdRef = useRef<string | null>(null);
+  const scrollAnchorRef = useRef<HTMLDivElement | null>(null);
 
   const canSend = useMemo(
     () => input.trim().length > 0 && !isSending,
     [input, isSending],
   );
+
+  useEffect(() => {
+    scrollAnchorRef.current?.scrollIntoView({ block: "end" });
+  }, [messages]);
 
   async function sendMessage(question: string) {
     const query = question.trim();
@@ -44,16 +52,23 @@ export function PortfolioChat({ quickQuestions }: PortfolioChatProps) {
     const assistantMessageId = crypto.randomUUID();
 
     setError(undefined);
+    setLastFailedQuery(undefined);
     setInput("");
     setIsSending(true);
     setMessages((current) => [
       ...current,
       userMessage,
-      { id: assistantMessageId, role: "assistant", content: "" },
+      {
+        id: assistantMessageId,
+        role: "assistant",
+        content: "",
+        status: "sending",
+      },
     ]);
 
     const controller = new AbortController();
     abortRef.current = controller;
+    taskIdRef.current = null;
 
     try {
       const response = await fetch("/api/chat", {
@@ -86,7 +101,18 @@ export function PortfolioChat({ quickQuestions }: PortfolioChatProps) {
           );
         },
         onConversationId: setConversationId,
+        onTaskId: (taskId) => {
+          taskIdRef.current = taskId;
+        },
       });
+
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === assistantMessageId
+            ? { ...message, status: "complete" }
+            : message,
+        ),
+      );
     } catch (caughtError) {
       if (caughtError instanceof DOMException && caughtError.name === "AbortError") {
         setError("已停止本次回复。");
@@ -96,17 +122,25 @@ export function PortfolioChat({ quickQuestions }: PortfolioChatProps) {
             ? caughtError.message
             : "AI 服务暂时不可用，请稍后重试。",
         );
+        setLastFailedQuery(query);
       }
       setMessages((current) =>
         current.map((message) =>
           message.id === assistantMessageId && !message.content
-            ? { ...message, content: "抱歉，这次没有成功获取回复。" }
+            ? {
+                ...message,
+                content: "抱歉，这次没有成功获取回复。",
+                status: "error",
+              }
+            : message.id === assistantMessageId
+              ? { ...message, status: "error" }
             : message,
         ),
       );
     } finally {
       setIsSending(false);
       abortRef.current = null;
+      taskIdRef.current = null;
     }
   }
 
@@ -116,6 +150,18 @@ export function PortfolioChat({ quickQuestions }: PortfolioChatProps) {
   }
 
   function stopStreaming() {
+    const taskId = taskIdRef.current;
+
+    if (taskId) {
+      void fetch("/api/chat/stop", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ taskId }),
+      });
+    }
+
     abortRef.current?.abort();
   }
 
@@ -141,6 +187,9 @@ export function PortfolioChat({ quickQuestions }: PortfolioChatProps) {
             ))}
           </div>
         </div>
+        <p className="rounded-md border border-[var(--line)] bg-[var(--panel)] p-4 text-sm leading-6 text-[var(--muted)]">
+          助手不会展示原始微信聊天记录，也不会声称自己是真实的 Leon。
+        </p>
       </aside>
 
       <section className="flex min-h-[560px] flex-col rounded-md border border-[var(--line)] bg-[var(--panel)]">
@@ -156,16 +205,28 @@ export function PortfolioChat({ quickQuestions }: PortfolioChatProps) {
             >
               <p className="whitespace-pre-wrap text-sm leading-7">
                 {message.content ||
-                  (message.role === "assistant" ? "正在思考..." : "")}
+                  (message.role === "assistant" ? "正在组织回复..." : "")}
               </p>
             </article>
           ))}
+          <div ref={scrollAnchorRef} />
         </div>
 
         {error ? (
-          <p className="border-t border-[var(--line)] px-4 py-2 text-sm text-[var(--danger)]">
-            {error}
-          </p>
+          <div className="flex items-center justify-between gap-3 border-t border-[var(--line)] px-4 py-2 text-sm text-[var(--danger)]">
+            <p>{error}</p>
+            {lastFailedQuery ? (
+              <button
+                className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] px-3 py-2 text-[var(--foreground)]"
+                disabled={isSending}
+                onClick={() => void sendMessage(lastFailedQuery)}
+                type="button"
+              >
+                <RefreshCw size={14} />
+                重试
+              </button>
+            ) : null}
+          </div>
         ) : null}
 
         <form
@@ -175,6 +236,12 @@ export function PortfolioChat({ quickQuestions }: PortfolioChatProps) {
           <textarea
             className="min-h-12 flex-1 resize-none rounded-md border border-[var(--line)] px-3 py-3 text-sm leading-6 outline-none transition focus:border-[var(--accent)]"
             onChange={(event) => setInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                void sendMessage(input);
+              }
+            }}
             placeholder="输入你想了解的问题..."
             rows={1}
             value={input}

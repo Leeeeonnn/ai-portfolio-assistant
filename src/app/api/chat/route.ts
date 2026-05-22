@@ -1,13 +1,15 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { buildDifyChatRequest, getDifyConfig } from "@/features/chat/server/dify";
+import {
+  buildDifyChatRequest,
+  getDifyConfig,
+} from "@/features/chat/server/dify";
 
 export const runtime = "nodejs";
 
 const chatRequestSchema = z.object({
   query: z.string().trim().min(1).max(4000),
   conversationId: z.string().optional(),
-  user: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -46,11 +48,14 @@ export async function POST(request: NextRequest) {
 
     if (!difyResponse.ok || !difyResponse.body) {
       const errorText = await difyResponse.text().catch(() => "");
+      console.error("Dify chat request failed", {
+        status: difyResponse.status,
+        body: errorText,
+      });
+
       return Response.json(
         {
-          error:
-            errorText ||
-            `Dify 请求失败，状态码：${difyResponse.status}`,
+          error: `Dify 请求失败，状态码：${difyResponse.status}`,
         },
         { status: difyResponse.status || 502 },
       );
@@ -61,6 +66,7 @@ export async function POST(request: NextRequest) {
         "Cache-Control": "no-cache, no-transform",
         "Content-Type":
           difyResponse.headers.get("Content-Type") || "text/event-stream",
+        "X-Accel-Buffering": "no",
       },
     });
   } catch (error) {

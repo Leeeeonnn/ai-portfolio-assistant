@@ -1,14 +1,38 @@
-import type { DifyStreamEvent } from "@/features/chat/types";
+import type {
+  DifyBlockingResponse,
+  DifyStreamEvent,
+} from "@/features/chat/types";
 
 export async function readDifyStream(
   response: Response,
   handlers: {
     onAnswer: (chunk: string) => void;
     onConversationId: (conversationId: string) => void;
+    onTaskId?: (taskId: string) => void;
   },
 ) {
   if (!response.body) {
     throw new Error("浏览器没有收到可读取的流式响应。");
+  }
+
+  const contentType = response.headers.get("Content-Type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    const payload = (await response.json()) as DifyBlockingResponse;
+
+    if (payload.conversation_id) {
+      handlers.onConversationId(payload.conversation_id);
+    }
+
+    if (payload.error || payload.message) {
+      throw new Error(payload.error || payload.message);
+    }
+
+    if (payload.answer) {
+      handlers.onAnswer(payload.answer);
+    }
+
+    return;
   }
 
   const reader = response.body.getReader();
@@ -41,18 +65,31 @@ export async function readDifyStream(
         return;
       }
 
-      const event = JSON.parse(payload) as DifyStreamEvent;
+      let event: DifyStreamEvent;
+
+      try {
+        event = JSON.parse(payload) as DifyStreamEvent;
+      } catch {
+        continue;
+      }
 
       if (event.conversation_id) {
         handlers.onConversationId(event.conversation_id);
       }
 
-      if (event.answer) {
-        handlers.onAnswer(event.answer);
+      if (event.task_id) {
+        handlers.onTaskId?.(event.task_id);
       }
 
-      if (event.event === "error" || event.error) {
-        throw new Error(event.error || "Dify 返回了错误事件。");
+      const errorMessage =
+        event.error || event.message || event.data?.error || event.data?.message;
+
+      if (event.event === "error" || errorMessage) {
+        throw new Error(errorMessage || "Dify 返回了错误事件。");
+      }
+
+      if (event.answer) {
+        handlers.onAnswer(event.answer);
       }
     }
   }
