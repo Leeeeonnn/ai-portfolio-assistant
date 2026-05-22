@@ -38,6 +38,65 @@ export async function readDifyStream(
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let hasEmittedAnswer = false;
+
+  function processEvent(eventText: string) {
+    const dataLine = eventText
+      .split("\n")
+      .find((line) => line.startsWith("data:"));
+
+    if (!dataLine) {
+      return false;
+    }
+
+    const payload = dataLine.replace(/^data:\s*/, "");
+
+    if (payload === "[DONE]") {
+      return true;
+    }
+
+    let event: DifyStreamEvent;
+
+    try {
+      event = JSON.parse(payload) as DifyStreamEvent;
+    } catch {
+      return false;
+    }
+
+    if (event.conversation_id) {
+      handlers.onConversationId(event.conversation_id);
+    }
+
+    if (event.task_id) {
+      handlers.onTaskId?.(event.task_id);
+    }
+
+    const errorMessage =
+      event.error || event.message || event.data?.error || event.data?.message;
+
+    if (event.event === "error" || errorMessage) {
+      throw new Error(errorMessage || "Dify 返回了错误事件。");
+    }
+
+    const workflowAnswer =
+      event.event === "workflow_finished"
+        ? event.data?.outputs?.answer
+        : undefined;
+    const answerNodeText =
+      event.event === "node_finished" && event.data?.node_type === "answer"
+        ? event.data.outputs?.answer || event.data.outputs?.text
+        : undefined;
+    const answer =
+      event.answer ||
+      (!hasEmittedAnswer ? answerNodeText || workflowAnswer : undefined);
+
+    if (answer) {
+      hasEmittedAnswer = true;
+      handlers.onAnswer(answer);
+    }
+
+    return false;
+  }
 
   while (true) {
     const { done, value } = await reader.read();
@@ -51,46 +110,15 @@ export async function readDifyStream(
     buffer = events.pop() ?? "";
 
     for (const eventText of events) {
-      const dataLine = eventText
-        .split("\n")
-        .find((line) => line.startsWith("data:"));
-
-      if (!dataLine) {
-        continue;
-      }
-
-      const payload = dataLine.replace(/^data:\s*/, "");
-
-      if (payload === "[DONE]") {
+      if (processEvent(eventText)) {
         return;
       }
-
-      let event: DifyStreamEvent;
-
-      try {
-        event = JSON.parse(payload) as DifyStreamEvent;
-      } catch {
-        continue;
-      }
-
-      if (event.conversation_id) {
-        handlers.onConversationId(event.conversation_id);
-      }
-
-      if (event.task_id) {
-        handlers.onTaskId?.(event.task_id);
-      }
-
-      const errorMessage =
-        event.error || event.message || event.data?.error || event.data?.message;
-
-      if (event.event === "error" || errorMessage) {
-        throw new Error(errorMessage || "Dify 返回了错误事件。");
-      }
-
-      if (event.answer) {
-        handlers.onAnswer(event.answer);
-      }
     }
+  }
+
+  const trailingEvent = `${buffer}${decoder.decode()}`.trim();
+
+  if (trailingEvent) {
+    processEvent(trailingEvent);
   }
 }

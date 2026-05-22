@@ -18,6 +18,11 @@ export type DifyStreamEvent = {
   data?: {
     error?: string;
     message?: string;
+    node_type?: string;
+    outputs?: {
+      answer?: string;
+      text?: string;
+    };
   };
 };
 

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:dify": "node scripts/test-dify.mjs"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.7",

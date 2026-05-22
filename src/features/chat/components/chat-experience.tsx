@@ -30,6 +30,7 @@ export function ChatExperience({ initialQuestion }: ChatExperienceProps) {
   const taskIdRef = useRef<string | null>(null);
   const scrollAnchorRef = useRef<HTMLDivElement | null>(null);
   const initialQuestionRef = useRef(initialQuestion);
+  const hasSentInitialQuestionRef = useRef(false);
 
   useEffect(() => {
     scrollAnchorRef.current?.scrollIntoView({ block: "end" });
@@ -38,7 +39,8 @@ export function ChatExperience({ initialQuestion }: ChatExperienceProps) {
   useEffect(() => {
     const question = initialQuestionRef.current.trim();
 
-    if (question) {
+    if (question && !hasSentInitialQuestionRef.current) {
+      hasSentInitialQuestionRef.current = true;
       void sendMessage(question);
       router.replace("/chat");
     }
