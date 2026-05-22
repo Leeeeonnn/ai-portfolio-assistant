@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, KeyboardEvent, useState } from "react";
-import Image from "next/image";
 import { figmaAssets } from "@/features/portfolio/data";
 
 type QuestionComposerProps = {
@@ -51,8 +50,12 @@ export function QuestionComposer({
         rows={1}
         value={value}
       />
-      <button aria-label="发送问题" disabled={!value.trim() || disabled} type="submit">
-        <Image alt="" height={18} src={figmaAssets.send} width={18} />
+      <button
+        aria-label="发送问题"
+        disabled={!value.trim() || disabled}
+        type="submit"
+      >
+        <img alt="" height={18} src={figmaAssets.send} width={18} />
       </button>
     </form>
   );

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
@@ -99,7 +98,7 @@ function FeatureCardButton({
       type="button"
     >
       <span className="figma-card-icon">
-        <Image
+        <img
           alt=""
           className={card.iconClassName}
           height={100}
