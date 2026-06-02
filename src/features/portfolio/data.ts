@@ -5,7 +5,10 @@ export type ToolItem = {
 
 export type FeatureAction =
   | {
-      type: "download";
+      type: "portfolio";
+    }
+  | {
+      type: "resume";
       href: string;
     }
   | {
@@ -18,9 +21,16 @@ export type FeatureAction =
 export type FeatureCard = {
   title: string;
   buttonLabel: string;
+  buttonIconSrc: string;
   iconSrc: string;
   iconClassName?: string;
   action: FeatureAction;
+};
+
+export type PortfolioProject = {
+  title: string;
+  imageSrc: string;
+  href: string;
 };
 
 export const figmaAssets = {
@@ -36,8 +46,30 @@ export const figmaAssets = {
   websiteIcon: "/figma-assets/website-icon.png",
   send: "/figma-assets/send.png",
   loadingWave: "/figma-assets/loading-wave.png",
+  chatLoading: "/figma-assets/chat-loading.png",
   contactQr: "/figma-assets/contact-qr.png",
   contactAvatar: "/figma-assets/contact-avatar.png",
+  portfolioButtonIcon: "/figma-assets/Portfolioiocn.png",
+  resumeButtonIcon: "/figma-assets/Resumeiconicon.png",
+  contactButtonIcon: "/figma-assets/Contactmeicon.png",
+  aboutButtonIcon: "/figma-assets/Aboutwebsite.png",
+  downloadIcon: "/figma-assets/download.png",
+  contactLooks: [
+    "/figma-assets/contact-look-1.png",
+    "/figma-assets/contact-look-2.png",
+    "/figma-assets/contact-look-3.png",
+    "/figma-assets/contact-look-4.png",
+    "/figma-assets/contact-look-5.png",
+    "/figma-assets/contact-look-6.png",
+    "/figma-assets/contact-look-7.png",
+    "/figma-assets/contact-look-8.png",
+    "/figma-assets/contact-look-9.png",
+  ],
+  projectAskbot: "/figma-assets/project-askbot.png",
+  projectTokenview: "/figma-assets/project-tokenview.png",
+  projectMixpay: "/figma-assets/project-mixpay.png",
+  projectDeveloper: "/figma-assets/project-developer.png",
+  projectChainseye: "/figma-assets/project-chainseye.png",
 };
 
 export const tools: ToolItem[] = [
@@ -51,25 +83,27 @@ export const tools: ToolItem[] = [
 export const featureCards: FeatureCard[] = [
   {
     title: "下载作品集",
-    buttonLabel: "下载作品集",
+    buttonLabel: "作品集",
+    buttonIconSrc: figmaAssets.portfolioButtonIcon,
     iconSrc: figmaAssets.portfolioIcon,
     action: {
-      type: "download",
-      href: "/files/portfolio.pdf",
+      type: "portfolio",
     },
   },
   {
     title: "下载简历",
-    buttonLabel: "下载简历",
+    buttonLabel: "简历",
+    buttonIconSrc: figmaAssets.resumeButtonIcon,
     iconSrc: figmaAssets.resumeIcon,
     action: {
-      type: "download",
+      type: "resume",
       href: "/files/resume.pdf",
     },
   },
   {
     title: "联系我",
     buttonLabel: "联系我",
+    buttonIconSrc: figmaAssets.contactButtonIcon,
     iconSrc: figmaAssets.meIcon,
     iconClassName: "portfolio-card-icon-me",
     action: {
@@ -79,11 +113,40 @@ export const featureCards: FeatureCard[] = [
   {
     title: "关于网站",
     buttonLabel: "关于网站",
+    buttonIconSrc: figmaAssets.aboutButtonIcon,
     iconSrc: figmaAssets.websiteIcon,
     iconClassName: "portfolio-card-icon-website",
     action: {
       type: "about",
     },
+  },
+];
+
+export const portfolioProjects: PortfolioProject[] = [
+  {
+    title: "AskBOT",
+    imageSrc: figmaAssets.projectAskbot,
+    href: "/projects/askbot",
+  },
+  {
+    title: "Tokenview",
+    imageSrc: figmaAssets.projectTokenview,
+    href: "/projects/tokenview",
+  },
+  {
+    title: "Mixpay",
+    imageSrc: figmaAssets.projectMixpay,
+    href: "/projects/mixpay",
+  },
+  {
+    title: "Developer",
+    imageSrc: figmaAssets.projectDeveloper,
+    href: "/projects/developer",
+  },
+  {
+    title: "Chainseye",
+    imageSrc: figmaAssets.projectChainseye,
+    href: "/projects/chainseye",
   },
 ];
 

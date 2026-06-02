@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 import { readDifyStream } from "@/features/chat/lib/stream";
+import { MarkdownRenderer } from "@/features/chat/components/markdown-renderer";
 import type { ChatMessage } from "@/features/chat/types";
+import { figmaAssets } from "@/features/portfolio/data";
 import { QuestionComposer } from "@/features/portfolio/components/question-composer";
 import { SiteHeader } from "@/features/portfolio/components/site-header";
 
@@ -191,7 +193,11 @@ export function ChatExperience({ initialQuestion }: ChatExperienceProps) {
                   </div>
                 ) : (
                   <div className="figma-answer-text">
-                    <p>{message.content || "正在组织回复..."}</p>
+                    {message.content ? (
+                      <MarkdownRenderer content={message.content} />
+                    ) : (
+                      <ThinkingIndicator />
+                    )}
                   </div>
                 )}
               </article>
@@ -231,5 +237,14 @@ export function ChatExperience({ initialQuestion }: ChatExperienceProps) {
         </div>
       </section>
     </main>
+  );
+}
+
+function ThinkingIndicator() {
+  return (
+    <div className="figma-thinking">
+      <img alt="" height={16} src={figmaAssets.chatLoading} width={16} />
+      <span className="shiny-text">Hmm…稍等我组织一下语言</span>
+    </div>
   );
 }

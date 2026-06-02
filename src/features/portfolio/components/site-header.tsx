@@ -5,11 +5,7 @@ export function SiteHeader() {
   return (
     <header className="portfolio-header" data-node-id="4:97">
       <Link aria-label="回到首页" className="portfolio-logo" href="/">
-        <img alt="" height={40} src={figmaAssets.logo} width={40} />
-        <span className="portfolio-logo-text">
-          <strong>王璐瑶的作品集</strong>
-          <span>Leon Portfolio</span>
-        </span>
+        <img alt="" height={40} src={figmaAssets.logo} width={116} />
       </Link>
 
       <nav aria-label="Built with" className="portfolio-tools">
