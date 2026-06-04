@@ -45,6 +45,7 @@ export const figmaAssets = {
   meIcon: "/figma-assets/me-icon.png",
   websiteIcon: "/figma-assets/website-icon.png",
   send: "/figma-assets/send.png",
+  loadingIcon: "/figma-assets/loading-icon.png",
   loadingWave: "/figma-assets/loading-wave.png",
   chatLoading: "/figma-assets/chat-loading.png",
   contactQr: "/figma-assets/contact-qr.png",

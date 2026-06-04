@@ -10,6 +10,7 @@ import {
 import {
   featureCards,
   figmaAssets,
+  portfolioProjects,
   presetQuestions,
   tools,
   type FeatureAction,
@@ -27,7 +28,30 @@ export function HomeExperience() {
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isPortfolioOpen, setIsPortfolioOpen] = useState(false);
   const [resumeHref, setResumeHref] = useState<string | null>(null);
-  const loadingPhase = useInitialHomeLoading();
+  const loadingState = useInitialHomeLoading();
+
+  useEffect(() => {
+    if (loadingState.phase !== "hidden") {
+      return undefined;
+    }
+
+    const routesToPrefetch = [
+      "/about",
+      "/chat",
+      ...portfolioProjects.map((project) => project.href),
+    ];
+    routesToPrefetch.forEach((href) => {
+      router.prefetch(href as Parameters<typeof router.prefetch>[0]);
+    });
+
+    const idleId = requestBrowserIdleCallback(() => {
+      void preloadImages(secondaryImageAssets);
+    });
+
+    return () => {
+      cancelBrowserIdleCallback(idleId);
+    };
+  }, [loadingState.phase, router]);
 
   function ask(question: string) {
     router.push(`/chat?q=${encodeURIComponent(question)}`);
@@ -56,8 +80,11 @@ export function HomeExperience() {
 
   return (
     <main className="figma-page figma-home" data-node-id="4:96">
-      {loadingPhase !== "hidden" ? (
-        <InitialHomeLoading isLeaving={loadingPhase === "leaving"} />
+      {loadingState.phase !== "hidden" ? (
+        <InitialHomeLoading
+          isLeaving={loadingState.phase === "leaving"}
+          progress={loadingState.progress}
+        />
       ) : null}
 
       <SiteHeader />
@@ -133,41 +160,84 @@ type LoadingPhase = "hidden" | "visible" | "leaving";
 
 const criticalHomeImages = [
   figmaAssets.logo,
+  figmaAssets.loadingIcon,
   figmaAssets.loadingWave,
   figmaAssets.send,
   ...tools.map((tool) => tool.src),
-  ...featureCards.flatMap((card) => [card.iconSrc, card.buttonIconSrc]),
+  ...featureCards.flatMap((card) => [
+    card.action.type === "contact" ? figmaAssets.contactLooks[4] : card.iconSrc,
+    card.buttonIconSrc,
+  ]),
   ...figmaAssets.contactLooks,
+];
+
+const secondaryImageAssets = [
+  ...figmaAssets.contactLooks,
+  figmaAssets.contactQr,
+  figmaAssets.contactAvatar,
+  ...portfolioProjects.map((project) => project.imageSrc),
+  "/figma-assets/about/head-left.png",
+  "/figma-assets/about/head-right.png",
+  "/figma-assets/about/laptop-avatar.png",
+  "/figma-assets/askbot/hero-doc.png",
+  "/figma-assets/askbot/hero-mobile.png",
+  "/figma-assets/askbot/flow.png",
+  "/figma-assets/askbot/input.png",
+  "/figma-assets/askbot/understanding.png",
+  "/figma-assets/askbot/result.png",
+  "/figma-assets/askbot/feedback.png",
+  "/figma-assets/askbot/gradient.png",
+  "/figma-assets/askbot/palette.png",
+  "/figma-assets/askbot/section-banner.png",
+  "/figma-assets/askbot/other-screens.png",
+  "/figma-assets/askbot/detail-background.png",
+  ...Array.from({ length: 19 }, (_, index) => `/figma-assets/tokenview/section-${index + 1}.png`),
+  ...Array.from({ length: 5 }, (_, index) => `/figma-assets/tvdev/section-${index + 1}.png`),
+  ...Array.from({ length: 10 }, (_, index) => `/figma-assets/others/section-${index + 1}.png`),
 ];
 
 function useInitialHomeLoading() {
   const [phase, setPhase] = useState<LoadingPhase>("hidden");
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (window.sessionStorage.getItem("portfolio-home-assets-ready") === "true") {
       return undefined;
     }
 
-    let shouldRenderLoading = false;
     let isCancelled = false;
-    const showTimer = window.setTimeout(() => {
-      shouldRenderLoading = true;
-      setPhase("visible");
-    }, 220);
+    let completed = 0;
+    let visualProgress = 0;
+    const uniqueCriticalImages = Array.from(new Set(criticalHomeImages));
 
-    preloadImages(criticalHomeImages).finally(() => {
+    setPhase("visible");
+    setProgress(0);
+
+    const progressTimer = window.setInterval(() => {
+      if (isCancelled) {
+        return;
+      }
+
+      visualProgress = Math.min(visualProgress + 1, 92);
+      setProgress((current) => Math.max(current, visualProgress));
+    }, 90);
+
+    preloadImages(uniqueCriticalImages, () => {
+      completed += 1;
+      const loadedProgress = Math.round((completed / uniqueCriticalImages.length) * 96);
+
+      if (!isCancelled) {
+        setProgress((current) => Math.max(current, loadedProgress));
+      }
+    }).finally(() => {
       window.sessionStorage.setItem("portfolio-home-assets-ready", "true");
-      window.clearTimeout(showTimer);
+      window.clearInterval(progressTimer);
 
       if (isCancelled) {
         return;
       }
 
-      if (!shouldRenderLoading) {
-        setPhase("hidden");
-        return;
-      }
-
+      setProgress(100);
       setPhase("leaving");
       window.setTimeout(() => {
         if (!isCancelled) {
@@ -178,14 +248,14 @@ function useInitialHomeLoading() {
 
     return () => {
       isCancelled = true;
-      window.clearTimeout(showTimer);
+      window.clearInterval(progressTimer);
     };
   }, []);
 
-  return phase;
+  return { phase, progress };
 }
 
-function preloadImages(srcList: string[]) {
+function preloadImages(srcList: string[], onSettle?: () => void) {
   const uniqueSrcList = Array.from(new Set(srcList));
 
   return Promise.allSettled(
@@ -197,12 +267,37 @@ function preloadImages(srcList: string[]) {
           image.onload = () => resolve();
           image.onerror = () => resolve();
           image.src = src;
+        }).finally(() => {
+          onSettle?.();
         }),
     ),
   );
 }
 
-function InitialHomeLoading({ isLeaving }: { isLeaving: boolean }) {
+function requestBrowserIdleCallback(callback: () => void) {
+  if ("requestIdleCallback" in window) {
+    return window.requestIdleCallback(callback, { timeout: 2500 });
+  }
+
+  return globalThis.setTimeout(callback, 900);
+}
+
+function cancelBrowserIdleCallback(id: ReturnType<typeof requestBrowserIdleCallback>) {
+  if ("cancelIdleCallback" in window) {
+    window.cancelIdleCallback(id as number);
+    return;
+  }
+
+  globalThis.clearTimeout(id);
+}
+
+function InitialHomeLoading({
+  isLeaving,
+  progress,
+}: {
+  isLeaving: boolean;
+  progress: number;
+}) {
   return (
     <div
       aria-label="加载中"
@@ -224,9 +319,15 @@ function InitialHomeLoading({ isLeaving }: { isLeaving: boolean }) {
         width={1512}
       />
       <div className="figma-loading-logo" data-node-id="4:227">
-        <img alt="" height={40} src={figmaAssets.logo} width={40} />
+        <img
+          alt=""
+          className="figma-loading-icon"
+          height={40}
+          src={figmaAssets.loadingIcon}
+          width={40}
+        />
         <p>王璐瑶的作品集</p>
-        <strong>86%</strong>
+        <strong>{progress}%</strong>
       </div>
     </div>
   );
