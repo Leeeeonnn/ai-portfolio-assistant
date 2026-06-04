@@ -29,9 +29,10 @@ export function HomeExperience() {
   const [isPortfolioOpen, setIsPortfolioOpen] = useState(false);
   const [resumeHref, setResumeHref] = useState<string | null>(null);
   const loadingState = useInitialHomeLoading();
+  const isHomeReady = loadingState.phase === "hidden";
 
   useEffect(() => {
-    if (loadingState.phase !== "hidden") {
+    if (!isHomeReady) {
       return undefined;
     }
 
@@ -51,7 +52,7 @@ export function HomeExperience() {
     return () => {
       cancelBrowserIdleCallback(idleId);
     };
-  }, [loadingState.phase, router]);
+  }, [isHomeReady, router]);
 
   function ask(question: string) {
     router.push(`/chat?q=${encodeURIComponent(question)}`);
@@ -87,71 +88,75 @@ export function HomeExperience() {
         />
       ) : null}
 
-      <SiteHeader />
+      {isHomeReady ? (
+        <>
+          <SiteHeader />
 
-      <section className="figma-home-body" data-node-id="4:110">
-        <div className="figma-welcome" data-node-id="4:111">
-          <div className="figma-title-pill" data-node-id="4:112">
-            <span aria-hidden="true" />
-            <BlurText
-              as="p"
-              by="word"
-              delay={120}
-              step={18}
-              text="资深 UX/UI 设计师 · AI 产品设计师 · 8 年工作经验"
-            />
-          </div>
-          <div className="figma-welcome-text" data-node-id="4:115">
-            <BlurText as="h1" delay={360} step={24} text="👋 Hi, 我是王璐瑶" />
-            <BlurText
-              as="p"
-              by="word"
-              delay={680}
-              step={54}
-              text="What would you like to know about me?"
-            />
-          </div>
-        </div>
+          <section className="figma-home-body" data-node-id="4:110">
+            <div className="figma-welcome" data-node-id="4:111">
+              <div className="figma-title-pill" data-node-id="4:112">
+                <span aria-hidden="true" />
+                <BlurText
+                  as="p"
+                  by="word"
+                  delay={120}
+                  step={18}
+                  text="资深 UX/UI 设计师 · AI 产品设计师 · 8 年工作经验"
+                />
+              </div>
+              <div className="figma-welcome-text" data-node-id="4:115">
+                <BlurText as="h1" delay={360} step={24} text="👋 Hi, 我是王璐瑶" />
+                <BlurText
+                  as="p"
+                  by="word"
+                  delay={680}
+                  step={54}
+                  text="What would you like to know about me?"
+                />
+              </div>
+            </div>
 
-        <div className="figma-card-row" data-node-id="4:118">
-          {featureCards.map((card, index) => (
-            <FeatureCardButton
-              card={card}
-              index={index}
-              key={card.title}
-              onAction={handleAction}
-            />
-          ))}
-        </div>
-      </section>
+            <div className="figma-card-row" data-node-id="4:118">
+              {featureCards.map((card, index) => (
+                <FeatureCardButton
+                  card={card}
+                  index={index}
+                  key={card.title}
+                  onAction={handleAction}
+                />
+              ))}
+            </div>
+          </section>
 
-      <section className="figma-conversation-home" data-node-id="4:127">
-        <div className="figma-preset-list" data-node-id="4:128">
-          {presetQuestions.map((question) => (
-            <button key={question} onClick={() => ask(question)} type="button">
-              {question}
-            </button>
-          ))}
-        </div>
-        <div className="figma-input-area">
-          <QuestionComposer onSubmit={ask} />
-          <p>仅作为能力展示，重要信息请联系本人核查。</p>
-        </div>
-      </section>
+          <section className="figma-conversation-home" data-node-id="4:127">
+            <div className="figma-preset-list" data-node-id="4:128">
+              {presetQuestions.map((question) => (
+                <button key={question} onClick={() => ask(question)} type="button">
+                  {question}
+                </button>
+              ))}
+            </div>
+            <div className="figma-input-area">
+              <QuestionComposer onSubmit={ask} />
+              <p>仅作为能力展示，重要信息请联系本人核查。</p>
+            </div>
+          </section>
 
-      <ContactModal
-        isOpen={isContactOpen}
-        onClose={() => setIsContactOpen(false)}
-      />
-      <PortfolioModal
-        isOpen={isPortfolioOpen}
-        onClose={() => setIsPortfolioOpen(false)}
-      />
-      <ResumeModal
-        fileHref={resumeHref ?? "/files/resume.pdf"}
-        isOpen={resumeHref !== null}
-        onClose={() => setResumeHref(null)}
-      />
+          <ContactModal
+            isOpen={isContactOpen}
+            onClose={() => setIsContactOpen(false)}
+          />
+          <PortfolioModal
+            isOpen={isPortfolioOpen}
+            onClose={() => setIsPortfolioOpen(false)}
+          />
+          <ResumeModal
+            fileHref={resumeHref ?? "/files/resume.pdf"}
+            isOpen={resumeHref !== null}
+            onClose={() => setResumeHref(null)}
+          />
+        </>
+      ) : null}
     </main>
   );
 }
