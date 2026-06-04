@@ -197,11 +197,13 @@ const secondaryImageAssets = [
 ];
 
 function useInitialHomeLoading() {
-  const [phase, setPhase] = useState<LoadingPhase>("hidden");
+  const [phase, setPhase] = useState<LoadingPhase>("visible");
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (window.sessionStorage.getItem("portfolio-home-assets-ready") === "true") {
+      setPhase("hidden");
+      setProgress(100);
       return undefined;
     }
 
