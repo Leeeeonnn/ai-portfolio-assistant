@@ -334,6 +334,10 @@ function InitialHomeLoading({
           width={40}
         />
         <p>王璐瑶的作品集</p>
+        <div className="figma-loading-hint">
+          <span>网站部署在 Vercel，建议开启 VPN，会顺畅很多</span>
+          <span className="figma-loading-hint-mobile">使用 PC 浏览器访问，体验会更好</span>
+        </div>
         <strong>{progress}%</strong>
       </div>
     </div>
