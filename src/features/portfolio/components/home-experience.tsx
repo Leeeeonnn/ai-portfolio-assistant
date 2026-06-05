@@ -101,11 +101,31 @@ export function HomeExperience() {
                   by="word"
                   delay={120}
                   step={18}
-                  text="资深 UX/UI 设计师 · AI 产品设计师 · 8 年工作经验"
+                  text="AI 产品设计师 (UX/UI) · 9 年工作经验"
                 />
               </div>
               <div className="figma-welcome-text" data-node-id="4:115">
-                <BlurText as="h1" delay={360} step={24} text="👋 Hi, 我是王璐瑶" />
+                <BlurText
+                  as="h1"
+                  className="figma-home-title-desktop"
+                  delay={360}
+                  step={24}
+                  text="👋 Hi, 我是王璐瑶"
+                />
+                <h1 aria-label="👋 Hi, 我是王璐瑶" className="figma-home-title-mobile">
+                  <BlurText
+                    className="figma-home-title-mobile-line"
+                    delay={360}
+                    step={24}
+                    text="👋 Hi,"
+                  />
+                  <BlurText
+                    className="figma-home-title-mobile-line"
+                    delay={520}
+                    step={24}
+                    text="我是王璐瑶"
+                  />
+                </h1>
                 <BlurText
                   as="p"
                   by="word"
@@ -398,6 +418,7 @@ function FeatureCardButton({
       className={[
         "figma-feature-card",
         isContactCard ? "figma-feature-card-contact" : undefined,
+        card.action.type === "about" ? "figma-feature-card-about" : undefined,
       ]
         .filter(Boolean)
         .join(" ")}
