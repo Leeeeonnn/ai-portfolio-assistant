@@ -76,7 +76,11 @@ export function ResumeModal({ fileHref, isOpen, onClose }: ResumeModalProps) {
             </button>
           </div>
         </div>
-        <iframe className="figma-resume-frame" src={`${fileHref}#toolbar=0&navpanes=0`} title="王璐瑶 UI 简历预览" />
+        <iframe
+          className="figma-resume-frame"
+          src={`${fileHref}#toolbar=0&navpanes=0&view=FitH&zoom=page-width`}
+          title="王璐瑶 UI 简历预览"
+        />
       </section>
     </div>
   );
