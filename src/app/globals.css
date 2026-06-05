@@ -67,6 +67,15 @@ img {
   will-change: filter, opacity, transform;
 }
 
+.blur-text-word {
+  margin-right: 0.25em;
+  white-space: normal;
+}
+
+.blur-text-word:last-child {
+  margin-right: 0;
+}
+
 @keyframes blur-text-reveal {
   from {
     opacity: 0;
@@ -305,11 +314,13 @@ img {
   left: 50%;
   top: 50%;
   display: inline-flex;
+  width: max-content;
   min-height: 40px;
   align-items: center;
   justify-content: center;
   gap: 4px;
   padding: 8px 16px;
+  padding-inline: 16px;
   border-radius: 20px;
   background: #000000;
   color: #ffffff;
@@ -331,9 +342,12 @@ img {
 
 .figma-card-button-label {
   display: inline-flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
 }
 
 .figma-feature-card-about .figma-card-button {
+  width: max-content;
   padding-inline: 16px;
 }
 
@@ -994,14 +1008,14 @@ img {
   z-index: 45;
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.88);
   backdrop-filter: blur(6px);
   animation: portfolio-backdrop-in 180ms ease both;
 }
 
 .figma-resume-panel {
   display: flex;
-  width: min(100vw, 1440px);
+  width: 100vw;
   height: 100vh;
   flex-direction: column;
   overflow: hidden;
@@ -1081,15 +1095,15 @@ img {
   justify-content: center;
   min-height: 0;
   overflow: hidden;
-  background: #f6f6f6;
+  background: #171717;
 }
 
 .figma-resume-frame {
-  width: 1440px;
+  width: 800px;
   max-width: 100%;
-  flex: 1 1 auto;
+  flex: 0 0 800px;
   border: 0;
-  background: #f6f6f6;
+  background: #171717;
 }
 
 @keyframes portfolio-backdrop-in {
@@ -2356,7 +2370,8 @@ img {
     bottom: 0;
     height: 223px;
     width: 874px;
-    object-fit: fill;
+    object-fit: contain;
+    object-position: left bottom;
   }
 
   .figma-loading-logo {
@@ -2590,12 +2605,15 @@ img {
     width: 100vw;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
+    background: #f6f6f6;
   }
 
   .figma-resume-frame {
     width: 100vw;
     min-width: 100vw;
     height: 100%;
+    flex: 1 1 auto;
+    background: #f6f6f6;
   }
 
   .askbot-hero h1 {

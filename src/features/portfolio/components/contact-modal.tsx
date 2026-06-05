@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { figmaAssets } from "@/features/portfolio/data";
 
 type ContactModalProps = {
@@ -28,7 +28,11 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
     };
   }, []);
 
-  function closeWithMotion() {
+  const closeWithMotion = useCallback(() => {
+    if (isClosing) {
+      return;
+    }
+
     setIsClosing(true);
 
     closeTimerRef.current = setTimeout(() => {
@@ -36,7 +40,25 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
       setShouldRender(false);
       setIsClosing(false);
     }, 180);
-  }
+  }, [isClosing, onClose]);
+
+  useEffect(() => {
+    if (!shouldRender) {
+      return undefined;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeWithMotion();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [shouldRender, closeWithMotion]);
 
   if (!shouldRender) {
     return null;

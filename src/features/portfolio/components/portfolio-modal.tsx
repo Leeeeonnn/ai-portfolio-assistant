@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   figmaAssets,
   portfolioProjects,
@@ -32,7 +32,11 @@ export function PortfolioModal({ isOpen, onClose }: PortfolioModalProps) {
     };
   }, []);
 
-  function closeWithMotion() {
+  const closeWithMotion = useCallback(() => {
+    if (isClosing) {
+      return;
+    }
+
     setIsClosing(true);
 
     closeTimerRef.current = setTimeout(() => {
@@ -40,7 +44,25 @@ export function PortfolioModal({ isOpen, onClose }: PortfolioModalProps) {
       setShouldRender(false);
       setIsClosing(false);
     }, 180);
-  }
+  }, [isClosing, onClose]);
+
+  useEffect(() => {
+    if (!shouldRender) {
+      return undefined;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeWithMotion();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [shouldRender, closeWithMotion]);
 
   if (!shouldRender) {
     return null;

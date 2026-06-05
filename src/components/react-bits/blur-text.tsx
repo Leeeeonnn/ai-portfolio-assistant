@@ -17,7 +17,7 @@ export function BlurText({
   step = 36,
   text,
 }: BlurTextProps) {
-  const parts = by === "word" ? text.split(/(\s+)/) : Array.from(text);
+  const parts = by === "word" ? text.trim().split(/\s+/) : Array.from(text);
 
   return (
     <Component
@@ -27,7 +27,12 @@ export function BlurText({
       {parts.map((part, index) => (
         <span
           aria-hidden="true"
-          className="blur-text-item"
+          className={[
+            "blur-text-item",
+            by === "word" ? "blur-text-word" : undefined,
+          ]
+            .filter(Boolean)
+            .join(" ")}
           key={`${part}-${index}`}
           style={
             {
