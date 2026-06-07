@@ -1106,6 +1106,10 @@ img {
   background: #171717;
 }
 
+.figma-resume-mobile-pages {
+  display: none;
+}
+
 @keyframes portfolio-backdrop-in {
   from {
     opacity: 0;
@@ -2592,8 +2596,34 @@ img {
   }
 
   .figma-resume-toolbar {
-    align-items: flex-start;
-    flex-direction: column;
+    min-height: 64px;
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .figma-resume-toolbar h2 {
+    flex: 0 0 auto;
+    font-size: 18px;
+    line-height: 20px;
+    white-space: nowrap;
+  }
+
+  .figma-resume-actions {
+    min-width: 0;
+    flex: 0 0 auto;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .figma-resume-download,
+  .figma-resume-close {
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 13px;
+    line-height: 22px;
   }
 
   .figma-resume-panel {
@@ -2606,14 +2636,27 @@ img {
     overflow: auto;
     -webkit-overflow-scrolling: touch;
     background: #f6f6f6;
+    padding: 12px;
   }
 
   .figma-resume-frame {
-    width: 100vw;
-    min-width: 100vw;
-    height: 100%;
-    flex: 1 1 auto;
-    background: #f6f6f6;
+    display: none;
+  }
+
+  .figma-resume-mobile-pages {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .figma-resume-mobile-pages img {
+    width: min(100%, 800px);
+    height: auto;
+    border-radius: 2px;
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
   }
 
   .askbot-hero h1 {

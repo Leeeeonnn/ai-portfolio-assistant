@@ -9,6 +9,11 @@ type ResumeModalProps = {
   onClose: () => void;
 };
 
+const resumePreviewPages = Array.from(
+  { length: 5 },
+  (_, index) => `/files/resume-pages/page-${index + 1}.png`,
+);
+
 export function ResumeModal({ fileHref, isOpen, onClose }: ResumeModalProps) {
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [isClosing, setIsClosing] = useState(false);
@@ -82,6 +87,17 @@ export function ResumeModal({ fileHref, isOpen, onClose }: ResumeModalProps) {
             src={`${fileHref}#toolbar=0&navpanes=0&scrollbar=1&view=FitH&zoom=page-width`}
             title="王璐瑶 UI 简历预览"
           />
+          <div className="figma-resume-mobile-pages" aria-label="王璐瑶 UI 简历预览">
+            {resumePreviewPages.map((pageSrc, index) => (
+              <img
+                alt={`简历第 ${index + 1} 页`}
+                height={1871}
+                key={pageSrc}
+                src={pageSrc}
+                width={1323}
+              />
+            ))}
+          </div>
         </div>
       </section>
     </div>
