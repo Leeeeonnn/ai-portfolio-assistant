@@ -1,6 +1,7 @@
 "use client";
 
 import type { PortfolioProject } from "@/features/portfolio/data";
+import { trackEvent } from "@/features/analytics/umami";
 
 type PortfolioProjectGridProps = {
   onProjectClick?: () => void;
@@ -18,7 +19,13 @@ export function PortfolioProjectGrid({
           className="figma-portfolio-project"
           href={project.href}
           key={project.title}
-          onClick={onProjectClick}
+          onClick={() => {
+            trackEvent("open_project", {
+              project: project.title,
+              target: project.href,
+            });
+            onProjectClick?.();
+          }}
         >
           <img alt="" height={104} src={project.imageSrc} width={96} />
           <span>{project.title}</span>

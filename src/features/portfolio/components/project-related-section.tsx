@@ -1,7 +1,10 @@
-import Link from "next/link";
 import type { CSSProperties } from "react";
-import { figmaAssets, portfolioProjects } from "@/features/portfolio/data";
+import { portfolioProjects } from "@/features/portfolio/data";
 import { PortfolioProjectGrid } from "@/features/portfolio/components/portfolio-project-grid";
+import {
+  BackHomeLink,
+  PortfolioPdfLink,
+} from "@/features/portfolio/components/tracked-project-actions";
 
 type ProjectRelatedSectionProps = {
   currentHref: string;
@@ -67,23 +70,8 @@ export function ProjectRelatedSection({
           <h2>看看其他作品</h2>
           <PortfolioProjectGrid projects={relatedProjects} />
           <div className="askbot-related-actions">
-            <a
-              className="askbot-pdf-button"
-              href="/files/portfolio.pdf"
-              rel="noreferrer"
-              target="_blank"
-            >
-              <img alt="" src={figmaAssets.downloadIcon} />
-              下载 PDF
-            </a>
-            <Link className="askbot-home-button" href="/">
-              回到首页
-              <img
-                alt=""
-                className="askbot-home-button-icon"
-                src={figmaAssets.backHomeIcon}
-              />
-            </Link>
+            <PortfolioPdfLink />
+            <BackHomeLink />
           </div>
         </div>
       </section>

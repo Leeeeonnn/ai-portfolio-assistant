@@ -9,6 +9,7 @@ import type { ChatMessage } from "@/features/chat/types";
 import { figmaAssets } from "@/features/portfolio/data";
 import { QuestionComposer } from "@/features/portfolio/components/question-composer";
 import { SiteHeader } from "@/features/portfolio/components/site-header";
+import { trackEvent } from "@/features/analytics/umami";
 
 type ChatExperienceProps = {
   initialQuestion: string;
@@ -59,6 +60,11 @@ export function ChatExperience({ initialQuestion }: ChatExperienceProps) {
     if (!query || isSending) {
       return;
     }
+
+    trackEvent("send_ai_question", {
+      hasConversation: Boolean(conversationId),
+      questionLength: query.length,
+    });
 
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),

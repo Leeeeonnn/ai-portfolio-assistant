@@ -6,6 +6,7 @@ import {
   portfolioProjects,
 } from "@/features/portfolio/data";
 import { PortfolioProjectGrid } from "@/features/portfolio/components/portfolio-project-grid";
+import { trackEvent } from "@/features/analytics/umami";
 
 type PortfolioModalProps = {
   isOpen: boolean;
@@ -98,6 +99,7 @@ export function PortfolioModal({ isOpen, onClose }: PortfolioModalProps) {
           <a
             className="figma-portfolio-download"
             href="/files/portfolio.pdf"
+            onClick={() => trackEvent("download_portfolio", { source: "portfolio_modal" })}
             rel="noreferrer"
             target="_blank"
           >

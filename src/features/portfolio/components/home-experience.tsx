@@ -22,6 +22,7 @@ import { QuestionComposer } from "@/features/portfolio/components/question-compo
 import { ResumeModal } from "@/features/portfolio/components/resume-modal";
 import { SiteHeader } from "@/features/portfolio/components/site-header";
 import { BlurText } from "@/components/react-bits/blur-text";
+import { trackEvent } from "@/features/analytics/umami";
 
 export function HomeExperience() {
   const router = useRouter();
@@ -54,27 +55,35 @@ export function HomeExperience() {
     };
   }, [isHomeReady, router]);
 
-  function ask(question: string) {
+  function ask(question: string, source: "home_input" | "home_preset") {
+    trackEvent("ask_ai_question", {
+      questionLength: question.length,
+      source,
+    });
     router.push(`/chat?q=${encodeURIComponent(question)}`);
   }
 
   function handleAction(action: FeatureAction) {
     if (action.type === "portfolio") {
+      trackEvent("open_portfolio");
       setIsPortfolioOpen(true);
       return;
     }
 
     if (action.type === "contact") {
+      trackEvent("open_contact");
       setIsContactOpen(true);
       return;
     }
 
     if (action.type === "about") {
+      trackEvent("open_about_site");
       router.push("/about");
       return;
     }
 
     if (action.type === "resume") {
+      trackEvent("view_resume");
       setResumeHref(action.href);
     }
   }
@@ -151,13 +160,17 @@ export function HomeExperience() {
           <section className="figma-conversation-home" data-node-id="4:127">
             <div className="figma-preset-list" data-node-id="4:128">
               {presetQuestions.map((question) => (
-                <button key={question} onClick={() => ask(question)} type="button">
+                <button
+                  key={question}
+                  onClick={() => ask(question, "home_preset")}
+                  type="button"
+                >
                   {question}
                 </button>
               ))}
             </div>
             <div className="figma-input-area">
-              <QuestionComposer onSubmit={ask} />
+              <QuestionComposer onSubmit={(question) => ask(question, "home_input")} />
               <p>仅作为能力展示，重要信息请联系本人核查。</p>
             </div>
           </section>

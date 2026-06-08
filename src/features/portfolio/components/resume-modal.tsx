@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { figmaAssets } from "@/features/portfolio/data";
+import { trackEvent } from "@/features/analytics/umami";
 
 type ResumeModalProps = {
   fileHref: string;
@@ -72,7 +73,12 @@ export function ResumeModal({ fileHref, isOpen, onClose }: ResumeModalProps) {
         <div className="figma-resume-toolbar">
           <h2>简历</h2>
           <div className="figma-resume-actions">
-            <a className="figma-resume-download" download href={fileHref}>
+            <a
+              className="figma-resume-download"
+              download
+              href={fileHref}
+              onClick={() => trackEvent("download_resume")}
+            >
               <img alt="" height={18} src={figmaAssets.downloadIcon} width={18} />
               下载 PDF
             </a>
