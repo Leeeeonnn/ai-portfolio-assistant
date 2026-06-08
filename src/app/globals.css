@@ -2562,7 +2562,18 @@ img {
   }
 
   .figma-contact-card {
-    width: calc(100vw - 48px);
+    width: min(318px, calc(100vw - 48px));
+    height: 318px;
+  }
+
+  .figma-contact-qr {
+    top: 134px;
+    bottom: auto;
+  }
+
+  .figma-contact-avatar {
+    right: 0;
+    bottom: 0;
   }
 
   .figma-portfolio-backdrop {
