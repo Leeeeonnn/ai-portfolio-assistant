@@ -60,7 +60,13 @@ export function HomeExperience() {
       questionLength: question.length,
       source,
     });
-    router.push(`/chat?q=${encodeURIComponent(question)}`);
+    const params = new URLSearchParams({ q: question });
+
+    if (source === "home_preset" && question !== "先做个自我介绍吧") {
+      params.set("mode", "preset");
+    }
+
+    router.push(`/chat?${params.toString()}`);
   }
 
   function handleAction(action: FeatureAction) {

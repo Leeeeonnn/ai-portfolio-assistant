@@ -10,9 +10,15 @@ import { figmaAssets } from "@/features/portfolio/data";
 import { QuestionComposer } from "@/features/portfolio/components/question-composer";
 import { SiteHeader } from "@/features/portfolio/components/site-header";
 import { trackEvent } from "@/features/analytics/umami";
+import {
+  getPresetAnswer,
+  presetAnswerDelayMs,
+  presetAnswerSuggestedQuestions,
+} from "@/features/chat/data/preset-answers";
 
 type ChatExperienceProps = {
   initialQuestion: string;
+  initialQuestionMode?: "dify" | "preset";
 };
 
 const answerRiskText =
@@ -25,7 +31,10 @@ const welcomeMessage: ChatMessage = {
   status: "complete",
 };
 
-export function ChatExperience({ initialQuestion }: ChatExperienceProps) {
+export function ChatExperience({
+  initialQuestion,
+  initialQuestionMode = "dify",
+}: ChatExperienceProps) {
   const router = useRouter();
   const [messages, setMessages] = useState<ChatMessage[]>([welcomeMessage]);
   const [conversationId, setConversationId] = useState<string>();
@@ -36,6 +45,7 @@ export function ChatExperience({ initialQuestion }: ChatExperienceProps) {
   const taskIdRef = useRef<string | null>(null);
   const scrollAnchorRef = useRef<HTMLDivElement | null>(null);
   const initialQuestionRef = useRef(initialQuestion);
+  const initialQuestionModeRef = useRef(initialQuestionMode);
   const hasSentInitialQuestionRef = useRef(false);
 
   useEffect(() => {
@@ -47,14 +57,19 @@ export function ChatExperience({ initialQuestion }: ChatExperienceProps) {
 
     if (question && !hasSentInitialQuestionRef.current) {
       hasSentInitialQuestionRef.current = true;
-      void sendMessage(question);
+      void sendMessage(question, {
+        usePresetAnswer: initialQuestionModeRef.current === "preset",
+      });
       router.replace("/chat");
     }
     // sendMessage intentionally stays outside dependencies for one-time boot.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
-  async function sendMessage(question: string) {
+  async function sendMessage(
+    question: string,
+    options: { usePresetAnswer?: boolean } = {},
+  ) {
     const query = question.trim();
 
     if (!query || isSending) {
@@ -95,6 +110,39 @@ export function ChatExperience({ initialQuestion }: ChatExperienceProps) {
     let hasSuggestedQuestions = false;
 
     try {
+      const presetAnswer = options.usePresetAnswer ? getPresetAnswer(query) : undefined;
+
+      if (presetAnswer) {
+        await streamPresetAnswer({
+          answer: presetAnswer,
+          signal: controller.signal,
+          onChunk: (chunk) => {
+            setMessages((current) =>
+              current.map((message) =>
+                message.id === assistantMessageId
+                  ? { ...message, content: message.content + chunk }
+                  : message,
+              ),
+            );
+          },
+        });
+
+        setMessages((current) =>
+          current.map((message) =>
+            message.id === assistantMessageId
+              ? {
+                  ...message,
+                  status: "complete",
+                  suggestedQuestions: presetAnswerSuggestedQuestions.filter(
+                    (suggestedQuestion) => suggestedQuestion !== query,
+                  ),
+                }
+              : message,
+          ),
+        );
+        return;
+      }
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -309,6 +357,50 @@ async function fetchSuggestedQuestions(messageId: string) {
     .map((question) => question.trim())
     .filter(Boolean)
     .slice(0, 3);
+}
+
+async function streamPresetAnswer({
+  answer,
+  onChunk,
+  signal,
+}: {
+  answer: string;
+  onChunk: (chunk: string) => void;
+  signal: AbortSignal;
+}) {
+  await abortableDelay(presetAnswerDelayMs, signal);
+
+  const chunks = answer.match(/[\s\S]{1,2}/g) ?? [];
+
+  for (const chunk of chunks) {
+    assertNotAborted(signal);
+    onChunk(chunk);
+    await abortableDelay(18, signal);
+  }
+}
+
+function abortableDelay(ms: number, signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    assertNotAborted(signal);
+
+    const timeoutId = window.setTimeout(() => {
+      signal.removeEventListener("abort", handleAbort);
+      resolve();
+    }, ms);
+
+    function handleAbort() {
+      window.clearTimeout(timeoutId);
+      reject(new DOMException("Aborted", "AbortError"));
+    }
+
+    signal.addEventListener("abort", handleAbort, { once: true });
+  });
+}
+
+function assertNotAborted(signal: AbortSignal) {
+  if (signal.aborted) {
+    throw new DOMException("Aborted", "AbortError");
+  }
 }
 
 function ThinkingIndicator() {
